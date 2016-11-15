@@ -26,6 +26,7 @@ public class MainActivity extends Activity {
 
 
 /**
+ mCurrentProgress//默认值
  private int mCircleColor = Color.parseColor("#00BFFF");//圆环颜色
  private int mCircleRadius = 300;//圆的半径
  private int mCircleStrokeWidth = 8;//圆的笔宽度
