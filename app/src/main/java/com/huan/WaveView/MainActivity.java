@@ -23,7 +23,10 @@ public class MainActivity extends Activity {
         ButterKnife.bind(this);
         cvAmCustom.setWaveBackgroundRes(R.drawable.icon_all_clear_sel_2);
         cvAmCustom.setWaveProgressDownUpSmooth(90f, true);
-
+        cvAmCustom.setShowEllipse(true);
+        cvAmCustom.setXSpeed1(3);
+        cvAmCustom.setXSpeed2(2);
+cvAmCustom.setStretchFactorA(3);
 
 /**
  mCurrentProgress//默认值

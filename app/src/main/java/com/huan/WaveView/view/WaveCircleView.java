@@ -37,11 +37,11 @@ import android.view.WindowManager;
  * -----------------------------------------------------------------------------------End-----------
  */
 public class WaveCircleView extends View {
+
     /**
      * 默认宽高
      */
-    private static final int DEFAULT_SIZE = 400;
-    private static final float STRETCH_FACTOR_A = 20; // y = Asin(wx+b)+h
+    private static final int DEFAULT_SIZE = 600;
     private static final int OFFSET_Y = 0;
     private static final int WAVE_SMOOTH_UP = 11;
     private static final int WAVE_SMOOTH_DOWN = 12;
@@ -52,27 +52,24 @@ public class WaveCircleView extends View {
     private static final int ELLIPSE_RECTF_REFRESH_3 = 17;
     private static final int TOTAL = 100;//总份数
     //----------------------------------------------------------------------------------------------
-    float mERWidthOffsetMax = 100.0f;//椭圆左偏移量(加圆半径等于椭圆长半径)
-    float mERHeightOffsetMax = 60.0f;//椭圆上偏移量//等于短半径
+    private float mERWidthOffsetMax = 50.0f;//椭圆左偏移量(加圆半径等于椭圆长半径)
+    private float mERHeightOffsetMax = 30.0f;//椭圆上偏移量//等于短半径
+    private float mStretchFactorA = 20; // y = Asin(wx+b)+h
     private float mCurrentProgress = 10f;//当前值
     private int mCViewHeight;//布局的高
     private int mCViewWidth;//布局的宽
     private Paint mCirclePaint;//圆的画笔
     private int mCircleColor = Color.parseColor("#00BFFF");//圆环颜色
-    private int mCircleRadius = 300;//圆的半径
+    private int mCircleRadius = 120;//圆的半径
     private int mCircleStrokeWidth = 8;//圆的笔宽度
-
     private Paint mCircleRingPaint;//圆环的画笔
     private int mCircleRingColor = Color.parseColor("#F0F8FF");//外环颜色
     private int mCircleRingStrokeWidth = 20;//圆环的笔宽度
     private int mCircleRingRadius = mCircleRadius + mCircleStrokeWidth / 2 + mCircleRingStrokeWidth / 2;//圆环的半径
-
     private Paint mArcPaint;//扇形画笔
     private int mArcColor = Color.parseColor("#FFFFFF");
-
     private Paint mWavePaint;//水波画笔
     private int mWaveColor = Color.GREEN;// 波纹颜色
-
     private int mXSpeed1 = 8;// 第一条水波移动速度
     private int mXSpeed2 = 5;// 第二条水波移动速度
     private float mCycleFactorW;
@@ -84,12 +81,9 @@ public class WaveCircleView extends View {
     private int mXOffsetSpeedTwo;
     private int mXOneOffset;
     private int mXTwoOffset;
-
     private RectF mProgressOval; //扇形
     private Bitmap image = null;//用户传的图片
-
     private Paint imagePaint;//图片画笔
-
     private DrawFilter mDrawFilter;
     private Bitmap bitmap = null;
     private int mCircleRingAlpha = 50;
@@ -97,28 +91,23 @@ public class WaveCircleView extends View {
     private Canvas cvsmask;
     private Bitmap mask;
     private Bitmap bm;
-
     private Paint mEllipsePaint;//椭圆画笔
     private RectF mEllipseRectF;
     private RectF mEllipseRectF2;
     private RectF mEllipseRectF3;
-
     private boolean isDrawFilter = false;
     private boolean isShowEllipse = false;
     private float mPercent;
-
     private Paint mWaveXfermodePaint;
-
     private float mErOffset;
     private int mErLeft;
     private int mErTop;
     private int mErRight;
     private int mRisingSpeedValue = 2;//水波默认上升速度
     private int mDescentSpeedValue = 3;//水波默认下降速度
-
-    private float mBaseEllipseValue = 80;//椭圆效果基础偏移量
-    private float mEllipseValue2 = 30;//椭圆效果偏移量2
-    private float mEllipseValue3 = 10;//椭圆效果偏移量3
+    private float mBaseEllipseValue = 20;//椭圆效果基础偏移量
+    private float mEllipseValue2 = 10;//椭圆效果偏移量2
+    private float mEllipseValue3 = 5;//椭圆效果偏移量3
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -223,48 +212,18 @@ public class WaveCircleView extends View {
             }
         }
     };
-
+    private Context mContext;
     //
     public WaveCircleView(Context context) {
         this(context, null);
     }
-
     public WaveCircleView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
-
     public WaveCircleView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        mContext = context;
         init(context);
-
-    }
-
-    public void setCircleColor(int mCircleColor) {
-        this.mCircleColor = mCircleColor;
-    }
-
-    public void setCircleRingColor(int mCircleRingColor) {
-        this.mCircleRingColor = mCircleRingColor;
-    }
-
-    public void setCircleRingStrokeWidth(int mCircleRingStrokeWidth) {
-        this.mCircleRingStrokeWidth = mCircleRingStrokeWidth;
-    }
-
-    public void setCircleRingRadius(int mCircleRingRadius) {
-        this.mCircleRingRadius = mCircleRingRadius;
-    }
-
-    public void setWaveColor(int mWaveColor) {
-        this.mWaveColor = mWaveColor;
-    }
-
-    public void setXSpeed1(int mXSpeed1) {
-        this.mXSpeed1 = mXSpeed1;
-    }
-
-    public void setXSpeed2(int mXSpeed2) {
-        this.mXSpeed2 = mXSpeed2;
     }
 
     private void init(Context context) {
@@ -318,21 +277,104 @@ public class WaveCircleView extends View {
         // 将dp转化为px，用于控制不同分辨率上移动速度基本一致
         mXOffsetSpeedOne = dipToPx(context, mXSpeed1);
         mXOffsetSpeedTwo = dipToPx(context, mXSpeed2);
+    }
 
-        if (image != null) {
-            //得到源图的宽高
+    private int dipToPx(Context context, int dip) {
+        return (int) (dip * getScreenDensity(context) + 0.5f);
+    }
 
-            float souceImageWidth = image.getWidth();
-            float souceImageHeight = image.getHeight();
-            //得到目标缩放比例
-
-            float heightRatio = 2 * mCircleRadius / souceImageHeight;
-            float widthRatio = 2 * mCircleRadius / souceImageWidth;
-            //新的比例图
-            bitmap = scaleBitmap(image, widthRatio, heightRatio);
-            image.recycle();
+    private float getScreenDensity(Context context) {
+        try {
+            DisplayMetrics dm = new DisplayMetrics();
+            ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay()
+                    .getMetrics(dm);
+            return dm.density;
+        } catch (Exception e) {
+            return DisplayMetrics.DENSITY_DEFAULT;
         }
+    }
 
+    public void setERHeightOffsetMax(float heightOffset) {
+        this.mERHeightOffsetMax = heightOffset;
+        reSetOffset();
+
+
+    }
+
+    private void reSetOffset() {
+        //高度等于高度的偏移量mERHeightOffsetMax
+        mErOffset = (mERWidthOffsetMax + mCircleRadius) / mERHeightOffsetMax;//椭圆的长短半径的比例
+        mErLeft = mCViewWidth / 2 - mCircleRadius;//这减掉一个圆的半径是为了让椭圆的左侧超出圆的半径。或者可以直接减一个值(该值大于圆的半径)
+        mErTop = mCViewHeight / 2 + mCircleRadius;
+        mErRight = mCViewWidth / 2 + mCircleRadius;
+        //必须满足value+mERHeightOffsetMax>=0
+        mEllipseRectF = new RectF(
+                mErLeft - mERWidthOffsetMax - mErOffset * mBaseEllipseValue,//左-
+                mErTop - mERHeightOffsetMax - mBaseEllipseValue,//上-
+                mErRight + mERWidthOffsetMax + mErOffset * mBaseEllipseValue,//右+
+                mErTop + mERHeightOffsetMax + mBaseEllipseValue);//下+
+
+
+        mEllipseRectF2 = new RectF(
+                mErLeft - mERWidthOffsetMax - mErOffset * mEllipseValue2,//左-
+                mErTop - mERHeightOffsetMax - mEllipseValue2,//上-
+                mErRight + mERWidthOffsetMax + mErOffset * mEllipseValue2,//右+
+                mErTop + mERHeightOffsetMax + mEllipseValue2);//下+
+
+        mEllipseRectF3 = new RectF(
+                mErLeft - mERWidthOffsetMax - mErOffset * mEllipseValue3,//左-
+                mErTop - mERHeightOffsetMax - mEllipseValue3,//上-
+                mErRight + mERWidthOffsetMax + mErOffset * mEllipseValue3,//右+
+                mErTop + mERHeightOffsetMax + mEllipseValue3);//下+
+    }
+
+    public void ERWidthOffsetMax(float widthOffset) {
+        this.mERWidthOffsetMax = widthOffset;
+        reSetOffset();
+    }
+
+    public void setStretchFactorA(float a) {
+        mStretchFactorA = a;
+    }
+
+    public void setCircleColor(int mCircleColor) {
+        this.mCircleColor = mCircleColor;
+
+        mCirclePaint.setColor(mCircleColor);
+    }
+
+    public void setCircleRingColor(int mCircleRingColor) {
+        this.mCircleRingColor = mCircleRingColor;
+
+        mCircleRingPaint.setColor(mCircleRingColor);
+    }
+
+    public void setCircleRingStrokeWidth(int mCircleRingStrokeWidth) {
+        this.mCircleRingStrokeWidth = mCircleRingStrokeWidth;
+
+        mCircleRingPaint.setStrokeWidth(mCircleRingStrokeWidth);//笔宽
+    }
+
+    public void setCircleRingRadius(int mCircleRingRadius) {
+        this.mCircleRingRadius = mCircleRingRadius;
+
+
+    }
+
+    public void setWaveColor(int mWaveColor) {
+        this.mWaveColor = mWaveColor;
+        mWavePaint.setColor(mWaveColor); // 设置画笔颜色
+    }
+
+    public void setXSpeed1(int mXSpeed1) {
+        this.mXSpeed1 = mXSpeed1;
+        mXOffsetSpeedOne = dipToPx(mContext, mXSpeed1);
+
+    }
+
+    public void setXSpeed2(int mXSpeed2) {
+        this.mXSpeed2 = mXSpeed2;
+        mXOffsetSpeedTwo = dipToPx(mContext, mXSpeed2);
     }
 
     @Override
@@ -360,14 +402,41 @@ public class WaveCircleView extends View {
         return result;
     }
 
+    /**
+     * 设置是否开启DrawFilter(用于抗锯齿)
+     *
+     * @param isDrawFilter
+     */
     public void setDrawFilter(boolean isDrawFilter) {
         this.isDrawFilter = isDrawFilter;
     }
 
+    /**
+     * 设置是否显示下方椭圆环
+     *
+     * @param isShowEllipse
+     */
     public void setShowEllipse(boolean isShowEllipse) {
         this.isShowEllipse = isShowEllipse;
         if (isShowEllipse)
             startSendEllipseSizeChange();
+    }
+
+    private void startSendEllipseSizeChange() {
+        Message ms1 = Message.obtain();
+        ms1.what = ELLIPSE_RECTF_REFRESH_1;
+        ms1.arg1 = (int) mBaseEllipseValue;
+        mHandler.sendMessageDelayed(ms1, 50);
+
+        Message ms2 = Message.obtain();
+        ms2.what = ELLIPSE_RECTF_REFRESH_2;
+        ms2.arg1 = (int) mEllipseValue2;
+        mHandler.sendMessageDelayed(ms2, 50);
+
+        Message ms3 = Message.obtain();
+        ms3.what = ELLIPSE_RECTF_REFRESH_3;
+        ms3.arg1 = (int) mEllipseValue3;
+        mHandler.sendMessageDelayed(ms3, 50);
     }
 
     @Override
@@ -451,42 +520,6 @@ public class WaveCircleView extends View {
         postInvalidate();
     }
 
-    /**
-     * 设置内圆是否填充 默认false
-     *
-     * @param isFull
-     */
-    public void setCirclePaintStyleIsFull(boolean isFull) {
-        if (isFull)
-            mCirclePaint.setStyle(Paint.Style.FILL);
-    }
-
-    /**
-     * 缩放图片
-     */
-    private Bitmap scaleBitmap(Bitmap origin, float widthRatio, float heightRatio) {
-        int width = origin.getWidth();
-        int height = origin.getHeight();
-        Matrix matrix = new Matrix();
-        matrix.preScale(widthRatio, heightRatio);
-        Bitmap newBitmap = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, false);
-        if (newBitmap.equals(origin)) {
-            return newBitmap;
-        }
-        origin.recycle();
-        origin = null;
-        return newBitmap;
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        // 关闭硬件加速，防止异常unsupported operation exception
-
-        this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-
-    }
-
     private void resetPositonY() {
         // mXOneOffset代表当前第一条水波纹要移动的距离
         int yOneInterval = mYPositions.length - mXOneOffset;
@@ -498,6 +531,24 @@ public class WaveCircleView extends View {
         System.arraycopy(mYPositions, mXTwoOffset, mResetTwoYPositions, 0,
                 yTwoInterval);
         System.arraycopy(mYPositions, 0, mResetTwoYPositions, yTwoInterval, mXTwoOffset);
+    }
+
+    /**
+     * 设置内圆是否填充 默认false
+     *
+     * @param isFull
+     */
+    public void setCirclePaintStyleIsFull(boolean isFull) {
+        if (isFull)
+            mCirclePaint.setStyle(Paint.Style.FILL);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        // 关闭硬件加速，防止异常unsupported operation exception
+        this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
     }
 
     @Override
@@ -518,7 +569,7 @@ public class WaveCircleView extends View {
 
         // 根据view总宽度得出所有对应的y值
         for (int i = 0; i < mTotalWidth; i++) {
-            mYPositions[i] = (float) (STRETCH_FACTOR_A * Math.sin(mCycleFactorW * i) + OFFSET_Y);
+            mYPositions[i] = (float) (mStretchFactorA * Math.sin(mCycleFactorW * i) + OFFSET_Y);
         }
         //初始化一些值
         //扇形左边距
@@ -542,29 +593,7 @@ public class WaveCircleView extends View {
         cvsmask = new Canvas(mask);
         //宽度等于mERWidthOffsetMax+圆的半径
         //高度等于高度的偏移量mERHeightOffsetMax
-        mErOffset = (mERWidthOffsetMax + mCircleRadius) / mERHeightOffsetMax;//椭圆的长短半径的比例
-        mErLeft = mCViewWidth / 2 - mCircleRadius;//这减掉一个圆的半径是为了让椭圆的左侧超出圆的半径。或者可以直接减一个值(该值大于圆的半径)
-        mErTop = mCViewHeight / 2 + mCircleRadius;
-        mErRight = mCViewWidth / 2 + mCircleRadius;
-        //必须满足value+mERHeightOffsetMax>=0
-        mEllipseRectF = new RectF(
-                mErLeft - mERWidthOffsetMax - mErOffset * mBaseEllipseValue,//左-
-                mErTop - mERHeightOffsetMax - mBaseEllipseValue,//上-
-                mErRight + mERWidthOffsetMax + mErOffset * mBaseEllipseValue,//右+
-                mErTop + mERHeightOffsetMax + mBaseEllipseValue);//下+
-
-
-        mEllipseRectF2 = new RectF(
-                mErLeft - mERWidthOffsetMax - mErOffset * mEllipseValue2,//左-
-                mErTop - mERHeightOffsetMax - mEllipseValue2,//上-
-                mErRight + mERWidthOffsetMax + mErOffset * mEllipseValue2,//右+
-                mErTop + mERHeightOffsetMax + mEllipseValue2);//下+
-
-        mEllipseRectF3 = new RectF(
-                mErLeft - mERWidthOffsetMax - mErOffset * mEllipseValue3,//左-
-                mErTop - mERHeightOffsetMax - mEllipseValue3,//上-
-                mErRight + mERWidthOffsetMax + mErOffset * mEllipseValue3,//右+
-                mErTop + mERHeightOffsetMax + mEllipseValue3);//下+
+        reSetOffset();
 
         //
         if (isShowEllipse) {
@@ -572,37 +601,46 @@ public class WaveCircleView extends View {
         }
     }
 
-    private void startSendEllipseSizeChange() {
-        Message ms1 = Message.obtain();
-        ms1.what = ELLIPSE_RECTF_REFRESH_1;
-        ms1.arg1 = (int) mBaseEllipseValue;
-        mHandler.sendMessageDelayed(ms1, 50);
-
-        Message ms2 = Message.obtain();
-        ms2.what = ELLIPSE_RECTF_REFRESH_2;
-        ms2.arg1 = (int) mEllipseValue2;
-        mHandler.sendMessageDelayed(ms2, 50);
-
-        Message ms3 = Message.obtain();
-        ms3.what = ELLIPSE_RECTF_REFRESH_3;
-        ms3.arg1 = (int) mEllipseValue3;
-        mHandler.sendMessageDelayed(ms3, 50);
-    }
-
+    /**
+     * 设置背景圆
+     *
+     * @param icon
+     */
     public void setWaveBackgroundRes(int icon) {
         image = BitmapFactory.decodeResource(getResources(), icon);//用户传的图片
+        if (image != null) {
+            //得到源图的宽高
+            float souceImageWidth = image.getWidth();
+            float souceImageHeight = image.getHeight();
+            //得到目标缩放比例
+
+            float heightRatio = 2 * mCircleRadius / souceImageHeight;
+            float widthRatio = 2 * mCircleRadius / souceImageWidth;
+            //新的比例图
+            bitmap = scaleBitmap(image, widthRatio, heightRatio);
+            image.recycle();
+        }
+    }
+
+    /**
+     * 缩放图片
+     */
+    private Bitmap scaleBitmap(Bitmap origin, float widthRatio, float heightRatio) {
+        int width = origin.getWidth();
+        int height = origin.getHeight();
+        Matrix matrix = new Matrix();
+        matrix.preScale(widthRatio, heightRatio);
+        Bitmap newBitmap = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, false);
+        if (newBitmap.equals(origin)) {
+            return newBitmap;
+        }
+        origin.recycle();
+        origin = null;
+        return newBitmap;
     }
 
     public void setWaveProgress(float progress) {
         setWaveProgressSmooth(progress, false);
-    }
-
-    public void setWaveRisingSpeedValue(int value) {
-        mRisingSpeedValue = value;
-    }
-
-    public void setWaveDescentSpeedValue(int value) {
-        mDescentSpeedValue = value;
     }
 
     /**
@@ -634,6 +672,26 @@ public class WaveCircleView extends View {
     }
 
     /**
+     * 设置上升速度
+     *
+     * @param value
+     */
+    public void setWaveRisingSpeedValue(int value) {
+        mRisingSpeedValue = value;
+    }
+
+    /**
+     * 设置下降速度
+     *
+     * @param value
+     */
+    public void setWaveDescentSpeedValue(int value) {
+        mDescentSpeedValue = value;
+    }
+
+    /**
+     * 设置平滑先下后上
+     *
      * @param progress
      * @param isDownUp
      */
@@ -652,21 +710,6 @@ public class WaveCircleView extends View {
 
         } else {//直接设置值
             setWaveProgressSmooth(progress, true);
-        }
-    }
-
-    private int dipToPx(Context context, int dip) {
-        return (int) (dip * getScreenDensity(context) + 0.5f);
-    }
-
-    private float getScreenDensity(Context context) {
-        try {
-            DisplayMetrics dm = new DisplayMetrics();
-            ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay()
-                    .getMetrics(dm);
-            return dm.density;
-        } catch (Exception e) {
-            return DisplayMetrics.DENSITY_DEFAULT;
         }
     }
 }
